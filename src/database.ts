@@ -72,6 +72,35 @@ export class ConnectionHelper {
         return { excessTables, deficitTables };
     }
 
+    async compareStructure(anotherConn: ConnectionHelper, tableName: string) {
+        try {
+            const excessFileds = [];
+            const deficitFileds = [];
+
+            const currentConnStruct = await this.query(
+                `DESCRIBE ${tableName};`
+            );
+            const anotherConnStruct = await anotherConn.query(
+                `DESCRIBE ${tableName};`
+            );
+            const currentConnStructMap = _.keyBy(currentConnStruct, 'Field');
+            const anotherConnStructMap = _.keyBy(anotherConnStruct, 'Field');
+            for (const field of currentConnStruct) {
+                if (!_.get(anotherConnStructMap, field.Field)) {
+                    excessFileds.push(field);
+                }
+            }
+            for (const field of anotherConnStruct) {
+                if (!_.get(currentConnStructMap, field.Field)) {
+                    deficitFileds.push(field);
+                }
+            }
+            return { excessFileds, deficitFileds };
+        } catch (error) {
+            throw error;
+        }
+    }
+
     async commpareData(
         anotherConn: ConnectionHelper,
         tableName: string,
